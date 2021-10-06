@@ -8,15 +8,19 @@ import (
 	"strings"
 )
 
+type IndexName string
+
 const (
-	CodePlainTextIndex = "code-plain-text-index"
-	CodeTransformedTextIndex = "code-transformed-text-index"
+	CodePlainTextIndex       IndexName = "code-plain-text-index"
+	CodeTransformedTextIndex IndexName = "code-transformed-text-index"
 )
 
 type Search struct {
 	Query *Match    `json:"query"`
 	WithSource bool `json:"_source"`
 	Sort []SortItem `json:"sort"`
+	From int `json:"from"`
+	Size int `json:"size"`
 }
 
 type Match struct {
@@ -38,12 +42,12 @@ func buildSortItem(field string, desc bool) SortItem {
 	return SortItem{field: direction}
 }
 
-var indexName2CodeFieldName = map[string]string{
+var indexName2CodeFieldName = map[IndexName]string{
 	CodePlainTextIndex: "code-plain-text",
 	CodeTransformedTextIndex: "code-transformed-text",
 }
 
-func MatchCode(targetCode, targetIndexName string) (ID2Score map[string]float64) {
+func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID2Score map[string]float64) {
 	indexName := targetIndexName
 	if _, ok := indexName2CodeFieldName[indexName]; !ok {
 		log.Printf("Unsupportted indexName = [%s]", indexName)
@@ -61,37 +65,42 @@ func MatchCode(targetCode, targetIndexName string) (ID2Score map[string]float64)
 		},
 		WithSource: false,
 		Sort: []SortItem{buildSortItem("_score", true)},
+		From: from,
+		Size: size,
 	}
 	if err := json.NewEncoder(&buf).Encode(search); err != nil {
-		log.Fatalf("Error encoding query: %s", err)
+		log.Printf("Error encoding query: %s", err)
+		return nil
 	}
 	log.Printf("search query payload: %s", buf.String())
 
 	res, err := ES.Search(
 		ES.Search.WithContext(context.Background()),
-		ES.Search.WithIndex(indexName),
+		ES.Search.WithIndex(string(indexName)),
 		ES.Search.WithBody(&buf),
 		ES.Search.WithTrackTotalHits(true),
 		ES.Search.WithPretty(),
 	)
 
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		log.Printf("Error getting response: %s", err)
+		return nil
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		var e map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Fatalf("Error parsing the response body: %s", err)
+			log.Printf("Error parsing the response body: %s", err)
 		} else {
 			// Print the response status and error information.
-			log.Fatalf("[%s] %s: %s",
+			log.Printf("[%s] %s: %s",
 				res.Status(),
 				e["error"].(map[string]interface{})["type"],
 				e["error"].(map[string]interface{})["reason"],
 			)
 		}
+		return nil
 	}
 
 	log.Printf("res to String = [%s]", res.String())
@@ -99,7 +108,8 @@ func MatchCode(targetCode, targetIndexName string) (ID2Score map[string]float64)
 	var r map[string]interface{}
 
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Fatalf("Error parsing the response body: %s", err)
+		log.Printf("Error parsing the response body: %s", err)
+		return nil
 	}
 	// Print the response status, number of results, and request duration.
 	log.Printf(

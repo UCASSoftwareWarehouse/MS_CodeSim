@@ -11,12 +11,12 @@ type CodePlainText struct {
 	ID             string `json:"id"`
 }
 
-func NewCodePlainText(plainText, uniquePath, tag string) *CodePlainText {
+func NewCodePlainText(plainText, uniquePath, tag, ID string) *CodePlainText {
 	return &CodePlainText{
 		CodePlainText:  plainText,
 		CodeUniquePath: uniquePath,
 		Tag:            tag,
-		ID:             uniquePath + ":" + tag,
+		ID:             ID,
 	}
 }
 
@@ -31,11 +31,15 @@ type CodeTransformedText struct {
 	ID             string `json:"id"`
 }
 
-func NewCodeTransformedText(transformed, uniquePath, tag string) *CodeTransformedText {
+func (c *CodeTransformedText) getID() string {
+	return c.ID
+}
+
+func NewCodeTransformedText(transformed, uniquePath, tag, ID string) *CodeTransformedText {
 	return &CodeTransformedText{
 		CodeTransformedText:  transformed,
 		CodeUniquePath: uniquePath,
 		Tag:            tag,
-		ID:             uniquePath + ":" + tag,
+		ID:             ID,
 	}
 }

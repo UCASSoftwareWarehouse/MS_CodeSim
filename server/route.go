@@ -21,3 +21,7 @@ func (c *codeSimServer) HelloWorld(ctx context.Context, request *pb_gen.CodeSimH
 func (c *codeSimServer) Search(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.CodeSimSearchResponse, error) {
 	return internal.Search(ctx, req)
 }
+
+func (c *codeSimServer) Upload(stream pb_gen.CodeSim_UploadServer) error {
+	return internal.Upload(stream)
+}

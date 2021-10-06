@@ -2,7 +2,7 @@ dev:
   app_name: "code_sim"
   host: "0.0.0.0"
   port: 4401
-  es_addr: "localhost:9200"
+  es_addr: "http://127.0.0.1:9200"
   transform_code_splitter: "`/"
   python_lexical_analyzer_path: "/Users/purchaser/go/src/code_sim/transformer/python-lexical-analyzer/analyze.py"
 
@@ -10,6 +10,6 @@ prd:
   app_name: "code_sim"
   host: "1.2.3.4" # for test
   port: 4401
-  es_addr: "localhost:9200"
+  es_addr: "http://127.0.0.1:9200"
   transform_code_splitter: "`/"
   python_lexical_analyzer_path: "/Users/purchaser/go/src/code_sim/transformer/python-lexical-analyzer/analyze.py"

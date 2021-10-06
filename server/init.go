@@ -17,7 +17,9 @@ func StartServe() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer := grpc.NewServer()
+	var options []grpc.ServerOption
+	options = append(options, grpc.MaxSendMsgSize(5 * 1024 * 1024 * 1024 * 1024), grpc.MaxRecvMsgSize(5 * 1024 * 1024 * 1024 * 1024))
+	grpcServer := grpc.NewServer(options...)
 	pb_gen.RegisterCodeSimServer(grpcServer, newCodeSimServer())
 	log.Printf("%s ready to server at %s...", appName, addr)
 	err = grpcServer.Serve(lis)
