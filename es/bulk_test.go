@@ -17,7 +17,7 @@ func TestBulkIndex(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		p := &pb_gen.CodeSimProject{
 			ProjectName: "yzchnb/SomeProject",
-			Tag:       "v1.0",
+			Tag:         "v1.0",
 		}
 		relP := fmt.Sprintf("some_dir/%d", i)
 		pt := fmt.Sprintf("plainText:%s:::::%d", genLongStr(), i)
@@ -30,7 +30,6 @@ func TestBulkIndex(t *testing.T) {
 	err := BulkIndex(CodePlainTextIndex, docs)
 	t.Logf("err=[%v]", err)
 }
-
 
 func genLongStr() string {
 	sb := &strings.Builder{}

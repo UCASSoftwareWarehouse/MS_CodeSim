@@ -6,10 +6,12 @@ import (
 	"log"
 	"strings"
 )
+
 type splitFrom int
+
 const (
 	splitFromFront splitFrom = 1
-	splitFromBack splitFrom = 2
+	splitFromBack  splitFrom = 2
 
 	tagSplitWord         = ":"
 	projectNameSplitWord = "@"
@@ -45,7 +47,7 @@ func ExtractProjectFileFromESID(esID string) (*pb_gen.CodeSimProjectFile, error)
 }
 
 func GenEsInfo(f *pb_gen.CodeSimProjectFile) (codeUniquePath, tag, ID string) {
-	codeUniquePath = fmt.Sprintf("%s" +projectNameSplitWord+ "%s", f.GetProjectInfo().GetProjectName(), f.GetRelativePath())
+	codeUniquePath = fmt.Sprintf("%s"+projectNameSplitWord+"%s", f.GetProjectInfo().GetProjectName(), f.GetRelativePath())
 	ID = fmt.Sprintf("%s:%s", codeUniquePath, f.GetProjectInfo().GetTag())
 	tag = f.GetProjectInfo().GetTag()
 	return
@@ -54,15 +56,15 @@ func GenEsInfo(f *pb_gen.CodeSimProjectFile) (codeUniquePath, tag, ID string) {
 func getFirstSplitWord(s, subStr string, sf splitFrom) (split string, restPiece string, err error) {
 	strs := strings.Split(s, subStr)
 	if len(strs) == 1 {
-		return "","", fmt.Errorf("string s=[%s] doesn't contain subStr=[%s]", s, subStr)
+		return "", "", fmt.Errorf("string s=[%s] doesn't contain subStr=[%s]", s, subStr)
 	}
 	var restPieces []string
 	if sf == splitFromFront {
 		split = strs[0]
 		restPieces = strs[1:]
 	} else {
-		split = strs[len(strs) - 1]
-		restPieces = strs[:len(strs) - 1]
+		split = strs[len(strs)-1]
+		restPieces = strs[:len(strs)-1]
 	}
 	restPiece = strings.Join(restPieces, subStr)
 	return

@@ -25,10 +25,10 @@ func (c *CodePlainText) getID() string {
 }
 
 type CodeTransformedText struct {
-	CodeTransformedText  string `json:"code-transformed-text"`
-	CodeUniquePath string `json:"code-unique-path"`
-	Tag            string `json:"tag"`
-	ID             string `json:"id"`
+	CodeTransformedText string `json:"code-transformed-text"`
+	CodeUniquePath      string `json:"code-unique-path"`
+	Tag                 string `json:"tag"`
+	ID                  string `json:"id"`
 }
 
 func (c *CodeTransformedText) getID() string {
@@ -37,9 +37,9 @@ func (c *CodeTransformedText) getID() string {
 
 func NewCodeTransformedText(transformed, uniquePath, tag, ID string) *CodeTransformedText {
 	return &CodeTransformedText{
-		CodeTransformedText:  transformed,
-		CodeUniquePath: uniquePath,
-		Tag:            tag,
-		ID:             ID,
+		CodeTransformedText: transformed,
+		CodeUniquePath:      uniquePath,
+		Tag:                 tag,
+		ID:                  ID,
 	}
 }

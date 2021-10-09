@@ -14,7 +14,7 @@ func TestNewCodeSimClient(t *testing.T) {
 	defer conn.Close()
 	cli := NewCodeSimClient(conn)
 	res, err := cli.HelloWorld(context.Background(), &CodeSimHelloWorldRequest{
-		HelloText:     "Hello!!!",
+		HelloText: "Hello!!!",
 	})
 	cli.Search(context.Background(), &CodeSimSearchRequest{
 		MatchText:       "if __name__ == '__main__: '",

@@ -16,11 +16,11 @@ const (
 )
 
 type Search struct {
-	Query *Match    `json:"query"`
-	WithSource bool `json:"_source"`
-	Sort []SortItem `json:"sort"`
-	From int `json:"from"`
-	Size int `json:"size"`
+	Query      *Match     `json:"query"`
+	WithSource bool       `json:"_source"`
+	Sort       []SortItem `json:"sort"`
+	From       int        `json:"from"`
+	Size       int        `json:"size"`
 }
 
 type Match struct {
@@ -29,7 +29,7 @@ type Match struct {
 
 type MatchOpt struct {
 	QueryText string `json:"query"`
-	Analyzer string `json:"analyzer"`
+	Analyzer  string `json:"analyzer"`
 }
 
 type SortItem map[string]string
@@ -43,7 +43,7 @@ func buildSortItem(field string, desc bool) SortItem {
 }
 
 var indexName2CodeFieldName = map[IndexName]string{
-	CodePlainTextIndex: "code-plain-text",
+	CodePlainTextIndex:       "code-plain-text",
 	CodeTransformedTextIndex: "code-transformed-text",
 }
 
@@ -55,7 +55,7 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 	}
 	var buf bytes.Buffer
 	search := &Search{
-		Query:&Match{
+		Query: &Match{
 			map[string]*MatchOpt{
 				indexName2CodeFieldName[targetIndexName]: {
 					QueryText: targetCode,
@@ -64,9 +64,9 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 			},
 		},
 		WithSource: false,
-		Sort: []SortItem{buildSortItem("_score", true)},
-		From: from,
-		Size: size,
+		Sort:       []SortItem{buildSortItem("_score", true)},
+		From:       from,
+		Size:       size,
 	}
 	if err := json.NewEncoder(&buf).Encode(search); err != nil {
 		log.Printf("Error encoding query: %s", err)
@@ -128,6 +128,7 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 	log.Println(strings.Repeat("=", 37))
 	return hitID2Scores
 }
+
 //
 //func MatchPlain(targetPlainCode string) (ID2Score map[string]float64) {
 //	indexName := CodePlainTextIndex

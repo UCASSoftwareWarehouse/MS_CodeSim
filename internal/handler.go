@@ -8,7 +8,7 @@ import (
 )
 
 func Search(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.CodeSimSearchResponse, error) {
- 	return query.SearchCode(ctx, req)
+	return query.SearchCode(ctx, req)
 }
 
 func Upload(stream pb_gen.CodeSim_UploadServer) error {

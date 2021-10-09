@@ -21,11 +21,11 @@ func BulkIndex(indexName IndexName, datas []Document) error {
 	var countSuccessful uint64
 
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
-		Index:         string(indexName),        // The default index name
-		Client:        ES,           // The Elasticsearch client
-		NumWorkers:    numWorkers,       // The number of worker goroutines
-		FlushBytes:    int(flushBytes),  // The flush threshold in bytes
-		FlushInterval: 30 * time.Second, // The periodic flush interval
+		Index:         string(indexName), // The default index name
+		Client:        ES,                // The Elasticsearch client
+		NumWorkers:    numWorkers,        // The number of worker goroutines
+		FlushBytes:    int(flushBytes),   // The flush threshold in bytes
+		FlushInterval: 30 * time.Second,  // The periodic flush interval
 	})
 	if err != nil {
 		log.Printf("Error creating the indexer: %s", err)
@@ -128,7 +128,7 @@ func BulkDelete(indexName string, ids []string) {
 
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Index:         indexName,        // The default index name
-		Client:        ES,           // The Elasticsearch client
+		Client:        ES,               // The Elasticsearch client
 		NumWorkers:    numWorkers,       // The number of worker goroutines
 		FlushBytes:    int(flushBytes),  // The flush threshold in bytes
 		FlushInterval: 30 * time.Second, // The periodic flush interval

@@ -49,9 +49,9 @@ func (u *Uploader) DoUpload(stream pb_gen.CodeSim_UploadServer) error {
 }
 
 type receiveStreamRes struct {
-	Project *pb_gen.CodeSimProject
+	Project  *pb_gen.CodeSimProject
 	FileType pb_gen.CodeSimUploadFileType
-	FPath string
+	FPath    string
 }
 
 func (u *Uploader) receiveStream(stream pb_gen.CodeSim_UploadServer) (*receiveStreamRes, error) {

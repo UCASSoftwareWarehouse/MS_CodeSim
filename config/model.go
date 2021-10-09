@@ -4,7 +4,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"os"
 )
 
 type ConfigurationEnv string
@@ -23,17 +22,37 @@ type EachConfig struct {
 	ESAddr                    string `yaml:"es_addr"`
 	PythonLexicalAnalyzerPath string `yaml:"python_lexical_analyzer_path"`
 	TransformCodeSplitter     string `yaml:"transform_code_splitter"`
+	ConsulAddr                string `yaml:"consul_addr"`
+	NetworkInterface          string `yaml:"network_interface"`
+
+	Env ConfigurationEnv
 }
 
-func parse(configFilepath string) Configuration {
-	if configFilepath == "" {
-		envConfigPath, ok := os.LookupEnv("CONFIG_PATH")
-		if !ok {
+type CmdArgs struct {
+	Env        ConfigurationEnv
+	Port       int
+	ConfigPath string
+}
+
+type EnvironArgs struct {
+	ConfigPath       string
+	PYPath           string
+	NetworkInterface string
+}
+
+func (c *EachConfig) GetEnv() ConfigurationEnv {
+	return c.Env
+}
+
+func parse() Configuration {
+	configPath := cmdArgs.ConfigPath
+	if cmdArgs.ConfigPath == "" {
+		if environArgs.ConfigPath == "" {
 			panic("CONFIG_PATH not set, plz check your environs")
 		}
-		configFilepath = envConfigPath
+		configPath = environArgs.ConfigPath
 	}
-	bs, err := ioutil.ReadFile(configFilepath)
+	bs, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("ConfigForEnv parse failed, read file failed, err=[%v]", err)
 	}
