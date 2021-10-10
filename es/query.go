@@ -15,33 +15,6 @@ const (
 	CodeTransformedTextIndex IndexName = "code-transformed-text-index"
 )
 
-type Search struct {
-	Query      *Match     `json:"query"`
-	WithSource bool       `json:"_source"`
-	Sort       []SortItem `json:"sort"`
-	From       int        `json:"from"`
-	Size       int        `json:"size"`
-}
-
-type Match struct {
-	M map[string]*MatchOpt `json:"match"` // fieldName to MatchOpt
-}
-
-type MatchOpt struct {
-	QueryText string `json:"query"`
-	Analyzer  string `json:"analyzer"`
-}
-
-type SortItem map[string]string
-
-func buildSortItem(field string, desc bool) SortItem {
-	direction := "asc"
-	if desc {
-		direction = "desc"
-	}
-	return SortItem{field: direction}
-}
-
 var indexName2CodeFieldName = map[IndexName]string{
 	CodePlainTextIndex:       "code-plain-text",
 	CodeTransformedTextIndex: "code-transformed-text",
@@ -52,11 +25,34 @@ var indexName2CodeFileAnalyzer = map[IndexName]string{
 	CodeTransformedTextIndex: "transformed_text_analyzer",
 }
 
-func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID2Score map[string]float64) {
-	indexName := targetIndexName
-	if _, ok := indexName2CodeFieldName[indexName]; !ok {
-		log.Printf("Unsupportted indexName = [%s]", indexName)
-		return nil
+type Query struct{}
+
+func GetQuery() Query{
+	return Query{}
+}
+
+func (q Query) MatchCodeIDs(targetCode string, targetIndexName IndexName, from, size int) (ID2Score map[string]float64) {
+	type MatchOpt struct {
+		QueryText string `json:"query"`
+		Analyzer  string `json:"analyzer"`
+	}
+	type Match struct {
+		M map[string]*MatchOpt `json:"match"` // fieldName to MatchOpt
+	}
+	type SortItem map[string]string
+	type Search struct {
+		Query      *Match     `json:"query"`
+		WithSource bool       `json:"_source"`
+		Sort       []SortItem `json:"sort"`
+		From       int        `json:"from"`
+		Size       int        `json:"size"`
+	}
+	buildSortItem := func(field string, desc bool) SortItem {
+		direction := "asc"
+		if desc {
+			direction = "desc"
+		}
+		return SortItem{field: direction}
 	}
 	var buf bytes.Buffer
 	search := &Search{
@@ -79,6 +75,23 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 	}
 	log.Printf("search query payload: %s", buf.String())
 
+	r, err := q.doQuery(targetIndexName, buf)
+	if err != nil {
+		return nil
+	}
+
+	// Print the ID and document source for each hit.
+	hitID2Scores := make(map[string]float64)
+	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
+		ID := hit.(map[string]interface{})["_id"].(string)
+		hitID2Scores[ID] = hit.(map[string]interface{})["_score"].(float64)
+		log.Printf(" * ID=%s, %s", ID, hit.(map[string]interface{})["_source"])
+	}
+	log.Println(strings.Repeat("=", 37))
+	return hitID2Scores
+}
+
+func (q Query) doQuery(indexName IndexName, buf bytes.Buffer) (map[string]interface{}, error) {
 	res, err := ES.Search(
 		ES.Search.WithContext(context.Background()),
 		ES.Search.WithIndex(string(indexName)),
@@ -89,7 +102,7 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 
 	if err != nil {
 		log.Printf("Error getting response: %s", err)
-		return nil
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -105,16 +118,13 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 				e["error"].(map[string]interface{})["reason"],
 			)
 		}
-		return nil
+		return nil, err
 	}
-
 	log.Printf("res to String = [%s]", res.String())
-
 	var r map[string]interface{}
-
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		log.Printf("Error parsing the response body: %s", err)
-		return nil
+		return nil, err
 	}
 	// Print the response status, number of results, and request duration.
 	log.Printf(
@@ -123,15 +133,47 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 		int(r["hits"].(map[string]interface{})["total"].(map[string]interface{})["value"].(float64)),
 		int(r["took"].(float64)),
 	)
+	return r, nil
+}
+
+func (q Query) FindCodeByIDs(targetIndexName IndexName, targetIDs []string) (map[string][]byte, error) {
+	type IDs struct {
+		Values []string `json:"values"`
+	}
+	type Match struct {
+		IDs *IDs `json:"ids"`
+	}
+	type FindByIDs struct {
+		Query      *Match `json:"query"`
+		WithSource bool   `json:"_source"`
+	}
+	var buf bytes.Buffer
+	findByIDs := &FindByIDs{
+		Query: &Match{
+			IDs: &IDs{
+				Values: targetIDs,
+			},
+		},
+		WithSource: true,
+	}
+	if err := json.NewEncoder(&buf).Encode(findByIDs); err != nil {
+		log.Printf("Error encoding query: %s", err)
+		return nil, err
+	}
+	log.Printf("find by ids query payload: %s", buf.String())
+	r, err := q.doQuery(targetIndexName, buf)
+	if err != nil {
+		return nil, err
+	}
 	// Print the ID and document source for each hit.
-	hitID2Scores := make(map[string]float64)
+	hitID2Code := make(map[string][]byte)
 	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
 		ID := hit.(map[string]interface{})["_id"].(string)
-		hitID2Scores[ID] = hit.(map[string]interface{})["_score"].(float64)
-		log.Printf(" * ID=%s, %s", ID, hit.(map[string]interface{})["_source"])
+		code := hit.(map[string]interface{})["_source"].(map[string]interface{})[indexName2CodeFieldName[targetIndexName]].(string)
+		hitID2Code[ID] = []byte(code)
+		log.Printf(" * ID=%s, code=%s", ID, code)
 	}
-	log.Println(strings.Repeat("=", 37))
-	return hitID2Scores
+	return hitID2Code, nil
 }
 
 //
