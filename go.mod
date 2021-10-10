@@ -1,6 +1,7 @@
 module code_sim
 
 require (
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210930093333-01de314d7883
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elastic/go-elasticsearch/v7 v7.15.0
 	github.com/hashicorp/consul/api v1.11.0

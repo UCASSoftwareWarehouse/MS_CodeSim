@@ -6,19 +6,23 @@ import (
 )
 
 var Conf *EachConfig
-var cmdArgs *CmdArgs
-var environArgs *EnvironArgs
 
 func InitConfig() {
-	initCmdArgs()
-	initEnvironArgs()
-	configs := parse()
-	Conf = configs[cmdArgs.Env]
-	Conf.Env = cmdArgs.Env
-	setConfByEnvirons()
+	args := &args{}
+	initEnvironArgs(args)
+	initCmdArgs(args)
+	Conf = parse(args)
 }
 
-func initCmdArgs() {
+func InitConfigWithFile(path string, env ConfigurationEnv) {
+	args := &args{
+		ConfigPath: path,
+		Env:        env,
+	}
+	Conf = parse(args)
+}
+
+func initCmdArgs(args *args) {
 	var configPath string
 	var env string
 	var port int
@@ -26,52 +30,28 @@ func initCmdArgs() {
 	flag.StringVar(&env, "env", "", "是否为测试测试环境，值为dev或prd")
 	flag.IntVar(&port, "port", 0, "指定端口号，默认为配置文件中配置的端口号")
 	flag.Parse()
-	e := func() ConfigurationEnv {
-		if env == "" {
-			var ok bool
-			env, ok = os.LookupEnv("ENV")
-			if !ok {
-				panic("ENV is not set, plz check your environ")
-			}
-		}
-		switch env {
-		case "dev":
-			return DevEnv
-		case "prd":
-			return PrdEnv
-		default:
-			panic("illegal ENV environ, should be dev or prd")
-		}
-	}()
-	cmdArgs = &CmdArgs{
-		Env:        e,
-		Port:       port,
-		ConfigPath: configPath,
+	e, _ := convert2Env(env)
+	if e != "" {
+		args.Env = e
+	}
+	if port != 0 {
+		args.Port = port
+	}
+	if configPath != "" {
+		args.ConfigPath = configPath
 	}
 }
 
-func initEnvironArgs() {
-	environArgs = &EnvironArgs{
-		ConfigPath:       "",
-		PYPath:           "",
-		NetworkInterface: "",
-	}
-	pyPath, ok := os.LookupEnv("PY_LEXICAL_ANALYZER_PATH")
+func initEnvironArgs(args *args) {
+	env, ok := os.LookupEnv("ENV")
 	if ok {
-		environArgs.PYPath = pyPath
+		e, _ := convert2Env(env)
+		if e != "" {
+			args.Env = e
+		}
 	}
 	networkInterface, ok := os.LookupEnv("NETWORK_INTERFACE")
 	if ok {
-		environArgs.NetworkInterface = networkInterface
-	}
-}
-
-func setConfByEnvirons() {
-	// set env args, env variable has higher priority
-	if environArgs.PYPath != "" {
-		Conf.PythonLexicalAnalyzerPath = environArgs.PYPath
-	}
-	if environArgs.NetworkInterface != "" {
-		Conf.NetworkInterface = environArgs.NetworkInterface
+		args.NetworkInterface = networkInterface
 	}
 }

@@ -47,6 +47,11 @@ var indexName2CodeFieldName = map[IndexName]string{
 	CodeTransformedTextIndex: "code-transformed-text",
 }
 
+var indexName2CodeFileAnalyzer = map[IndexName]string{
+	CodePlainTextIndex:       "plain_text_ngram_analyzer",
+	CodeTransformedTextIndex: "transformed_text_analyzer",
+}
+
 func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID2Score map[string]float64) {
 	indexName := targetIndexName
 	if _, ok := indexName2CodeFieldName[indexName]; !ok {
@@ -59,7 +64,7 @@ func MatchCode(targetCode string, targetIndexName IndexName, from, size int) (ID
 			map[string]*MatchOpt{
 				indexName2CodeFieldName[targetIndexName]: {
 					QueryText: targetCode,
-					Analyzer:  "plain_text_ngram_analyzer",
+					Analyzer:  indexName2CodeFileAnalyzer[targetIndexName],
 				},
 			},
 		},

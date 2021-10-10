@@ -5,7 +5,6 @@ dev:
   consul_addr: "http://133.133.135.42:8500"
   es_addr: "http://133.133.135.42:9200"
   transform_code_splitter: "`/"
-  python_lexical_analyzer_path: "/Users/purchaser/go/src/code_sim/transformer/python-lexical-analyzer/analyze.py"
   network_interface: "eth2"
 
 prd:
@@ -15,5 +14,4 @@ prd:
   consul_addr: "http://consul_server:8500"
   es_addr: "http://es:9200"
   transform_code_splitter: "`/"
-  python_lexical_analyzer_path: "/go/src/code_sim/transformer/python-lexical-analyzer/analyze.py"
   network_interface: "eth2"

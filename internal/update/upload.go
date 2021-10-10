@@ -1,9 +1,10 @@
-package data
+package update
 
 import (
 	"code_sim/es"
 	"code_sim/internal/converter"
 	"code_sim/pb_gen"
+	"code_sim/transformer"
 	"code_sim/util"
 	"encoding/json"
 	"errors"
@@ -13,7 +14,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -21,12 +24,16 @@ const (
 	loadFileBatchSize = 10
 )
 
-var SourceCodeUploader = &Uploader{}
+func Upload(stream pb_gen.CodeSim_UploadServer) error {
+	return sourceCodeUploader.doUpload(stream)
+}
+
+var sourceCodeUploader = &Uploader{}
 
 type Uploader struct {
 }
 
-func (u *Uploader) DoUpload(stream pb_gen.CodeSim_UploadServer) error {
+func (u *Uploader) doUpload(stream pb_gen.CodeSim_UploadServer) error {
 	res, err := u.receiveStream(stream)
 	if err != nil {
 		log.Printf("upload chunk, failed receive stream")
@@ -195,62 +202,29 @@ func (u *Uploader) extract(fileType pb_gen.CodeSimUploadFileType, filepath strin
 	}
 }
 
-func (u *Uploader) savePlainTextDocs(project *pb_gen.CodeSimProject, absPaths, relPaths []string) error {
-	var genPlainTextDoc = func(plainText, relPath string) es.Document {
-		codeUniquePath, tag, ID := converter.GenEsInfo(&pb_gen.CodeSimProjectFile{
-			ProjectInfo:  project,
-			RelativePath: relPath,
-		})
-		return es.NewCodePlainText(plainText, codeUniquePath, tag, ID)
-	}
-
-	c := 0
-	currBatch := 0
-	relPathsBatch := make([]string, 0, loadFileBatchSize)
-	absPathsBatch := make([]string, 0, loadFileBatchSize)
-	for i, relP := range relPaths {
-		c++
-		relPathsBatch = append(relPathsBatch, relP)
-		absPathsBatch = append(absPathsBatch, absPaths[i])
-		if c%loadFileBatchSize != 0 {
-			continue
-		}
-
-		currBatch++
-		log.Printf("savePlainTextDocs loading batch=[%d], batchSize=[%d]", currBatch, len(relPathsBatch))
-		docs := make([]es.Document, 0, loadFileBatchSize)
-		for j, eachRelP := range relPathsBatch {
-			bs, err := ioutil.ReadFile(absPaths[j])
-			if err != nil {
-				log.Printf("savePlainTextDocs failed reading file, path=[%s]", absPaths[j])
-				return err
-			}
-			docs = append(docs, genPlainTextDoc(string(bs), eachRelP))
-		}
-		err := es.BulkIndex(es.CodePlainTextIndex, docs)
-		if err != nil {
-			log.Printf("savePlainTextDocs failed when using BulkIndex, err=[%v]", err)
-			return err
-		}
-		log.Printf("savePlainTextDocs saved batch=[%d]", currBatch)
-		relPathsBatch = relPathsBatch[0:0]
-		absPathsBatch = absPathsBatch[0:0]
-	}
-	return nil
-}
-
-type docGenerator func(project *pb_gen.CodeSimProject, plainText, relPath string) es.Document
+type docGenerator func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document
 
 var docGenerators = map[es.IndexName]docGenerator{
-	es.CodePlainTextIndex: func(project *pb_gen.CodeSimProject, plainText, relPath string) es.Document {
-		codeUniquePath, tag, ID := converter.GenEsInfo(&pb_gen.CodeSimProjectFile{
-			ProjectInfo:  project,
-			RelativePath: relPath,
-		})
-		return es.NewCodePlainText(plainText, codeUniquePath, tag, ID)
+	es.CodePlainTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
+		return es.NewCodePlainText(plainText, esProjFileIdentifier)
 	},
-	es.CodeTransformedTextIndex: func(project *pb_gen.CodeSimProject, plainText, relPath string) es.Document {
-		return nil
+	es.CodeTransformedTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
+		b := path.Base(relPath)
+		i := strings.LastIndex(b, ".")
+		if i == -1 {
+			return nil
+		}
+		suffix := b[i+1:]
+		codeType, err := transformer.GetSupportedCodeType(suffix)
+		if err != nil {
+			log.Printf("encounter file suffix is not supported code type, suffix is %s, relPath=[%s]", suffix, relPath)
+			return nil
+		}
+		transformed, err := transformer.Transform(plainText, codeType)
+		if err != nil {
+			return nil
+		}
+		return es.NewCodeTransformedText(transformed, esProjFileIdentifier)
 	},
 }
 
@@ -281,7 +255,10 @@ func (u *Uploader) saveDocs(project *pb_gen.CodeSimProject, absPaths, relPaths [
 				return err
 			}
 			for indexName, gen := range docGenerators {
-				doc := gen(project, string(bs), eachRelP)
+				doc := gen(converter.ConvertToES(&pb_gen.CodeSimProjectFile{
+					ProjectInfo:  project,
+					RelativePath: eachRelP,
+				}), string(bs), eachRelP)
 				if doc != nil {
 					batchDocs[indexName] = append(batchDocs[indexName], doc)
 				}

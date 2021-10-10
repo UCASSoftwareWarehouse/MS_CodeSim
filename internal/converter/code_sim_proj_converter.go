@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"code_sim/es"
 	"code_sim/pb_gen"
 	"fmt"
 	"log"
@@ -46,11 +47,15 @@ func ExtractProjectFileFromESID(esID string) (*pb_gen.CodeSimProjectFile, error)
 	}, nil
 }
 
-func GenEsInfo(f *pb_gen.CodeSimProjectFile) (codeUniquePath, tag, ID string) {
-	codeUniquePath = fmt.Sprintf("%s"+projectNameSplitWord+"%s", f.GetProjectInfo().GetProjectName(), f.GetRelativePath())
-	ID = fmt.Sprintf("%s:%s", codeUniquePath, f.GetProjectInfo().GetTag())
-	tag = f.GetProjectInfo().GetTag()
-	return
+func ConvertToES(f *pb_gen.CodeSimProjectFile) *es.ProjectFileIdentifier {
+	codeUniquePath := fmt.Sprintf("%s"+projectNameSplitWord+"%s", f.GetProjectInfo().GetProjectName(), f.GetRelativePath())
+	ID := fmt.Sprintf("%s:%s", codeUniquePath, f.GetProjectInfo().GetTag())
+	tag := f.GetProjectInfo().GetTag()
+	return &es.ProjectFileIdentifier{
+		CodeUniquePath: codeUniquePath,
+		Tag:            tag,
+		ID:             ID,
+	}
 }
 
 func getFirstSplitWord(s, subStr string, sf splitFrom) (split string, restPiece string, err error) {
