@@ -37,13 +37,17 @@ func Search(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.Code
 	for _, codeType := range req.GetCodeTypes() {
 		fields = append(fields, codeTypeMap[codeType])
 	}
-	res := es.GetQuery().MatchCode(&es.MatchCodeParams{
+	res, err := es.GetQuery().MatchCode(&es.MatchCodeParams{
 		TargetCode:   req.GetMatchText(),
 		TargetFields: fields,
 		From:         int(req.GetOffset()),
 		Size:         int(req.GetLimit()),
 		WithSource:   req.GetWithSource(),
 	})
+	if err != nil {
+		log.Printf("Search MatchCode failed, err=[%v]", err)
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Search failed, err=[%v]", err))
+	}
 	return packSearchResponse(res)
 }
 

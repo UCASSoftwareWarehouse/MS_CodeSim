@@ -41,7 +41,7 @@ type MatchCodeEachRes struct {
 //  "from": 0,
 //  "size": 10
 //}
-func (q Query) MatchCode(params *MatchCodeParams) []*MatchCodeEachRes {
+func (q Query) MatchCode(params *MatchCodeParams) ([]*MatchCodeEachRes, error) {
 	type MatchOpt struct {
 		QueryText string   `json:"query"`
 		Fields    []string `json:"fields"`
@@ -88,13 +88,13 @@ func (q Query) MatchCode(params *MatchCodeParams) []*MatchCodeEachRes {
 	}
 	if err := json.NewEncoder(&buf).Encode(search); err != nil {
 		log.Printf("Error encoding query: %s", err)
-		return nil
+		return nil, err
 	}
 	log.Printf("search query payload: %s", buf.String())
 
 	r, err := q.doQuery(CodeIndex, buf)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// Print the ID and document source for each hit.
@@ -115,7 +115,7 @@ func (q Query) MatchCode(params *MatchCodeParams) []*MatchCodeEachRes {
 		})
 	}
 	log.Println(strings.Repeat("=", 37))
-	return res
+	return res, nil
 }
 
 func (q Query) GetCodeByIDs(targetIDs []string) (map[string][]byte, error) {
