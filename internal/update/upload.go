@@ -4,7 +4,6 @@ import (
 	"code_sim/es"
 	"code_sim/internal/converter"
 	"code_sim/pb_gen"
-	"code_sim/transformer"
 	"code_sim/util"
 	"encoding/json"
 	"errors"
@@ -14,9 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -205,26 +202,29 @@ func (u *Uploader) extract(fileType pb_gen.CodeSimUploadFileType, filepath strin
 type docGenerator func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document
 
 var docGenerators = map[es.IndexName]docGenerator{
-	es.CodePlainTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
+	//es.CodePlainTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
+	//	return es.NewCodePlainText(plainText, esProjFileIdentifier)
+	//},
+	//es.CodeTransformedTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
+	//	b := path.Base(relPath)
+	//	i := strings.LastIndex(b, ".")
+	//	if i == -1 {
+	//		return nil
+	//	}
+	//	suffix := b[i+1:]
+	//	codeType, err := transformer.GetSupportedCodeType(suffix)
+	//	if err != nil {
+	//		log.Printf("encounter file suffix is not supported code type, suffix is %s, relPath=[%s]", suffix, relPath)
+	//		return nil
+	//	}
+	//	transformed, err := transformer.Transform(plainText, codeType)
+	//	if err != nil {
+	//		return nil
+	//	}
+	//	return es.NewCodeTransformedText(transformed, esProjFileIdentifier)
+	//},
+	es.CodeIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
 		return es.NewCodePlainText(plainText, esProjFileIdentifier)
-	},
-	es.CodeTransformedTextIndex: func(esProjFileIdentifier *es.ProjectFileIdentifier, plainText, relPath string) es.Document {
-		b := path.Base(relPath)
-		i := strings.LastIndex(b, ".")
-		if i == -1 {
-			return nil
-		}
-		suffix := b[i+1:]
-		codeType, err := transformer.GetSupportedCodeType(suffix)
-		if err != nil {
-			log.Printf("encounter file suffix is not supported code type, suffix is %s, relPath=[%s]", suffix, relPath)
-			return nil
-		}
-		transformed, err := transformer.Transform(plainText, codeType)
-		if err != nil {
-			return nil
-		}
-		return es.NewCodeTransformedText(transformed, esProjFileIdentifier)
 	},
 }
 

@@ -35,6 +35,7 @@ type EachConfig struct {
 	TransformCodeSplitter string `yaml:"transform_code_splitter"`
 	ConsulAddr            string `yaml:"consul_addr"`
 	NetworkInterface      string `yaml:"network_interface"`
+	MaxSearchDepth        int    `yaml:"max_search_depth"`
 
 	Env ConfigurationEnv
 }
