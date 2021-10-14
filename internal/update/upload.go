@@ -63,7 +63,7 @@ func (u *Uploader) receiveStream(stream pb_gen.CodeSim_UploadServer) (*receiveSt
 	if err != nil {
 		err = stream.SendAndClose(&pb_gen.CodeSimUploadResponse{
 			Message: "Failed to create temp file",
-			Status:  pb_gen.CodeSimUploadStatus_fail,
+			Status:  pb_gen.CodeSimUploadStatus_code_sim_upload_status_fail,
 		})
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (u *Uploader) receiveStream(stream pb_gen.CodeSim_UploadServer) (*receiveSt
 		if err == io.EOF {
 			err = stream.SendAndClose(&pb_gen.CodeSimUploadResponse{
 				Message: "Upload Received",
-				Status:  pb_gen.CodeSimUploadStatus_OK,
+				Status:  pb_gen.CodeSimUploadStatus_code_sim_upload_status_OK,
 			})
 			if err != nil {
 				err = errors.New("failed to send status code")
@@ -98,7 +98,7 @@ func (u *Uploader) receiveStream(stream pb_gen.CodeSim_UploadServer) (*receiveSt
 			log.Printf("upload chunk, failed while writing to fo, err=[%v]", err)
 			err = stream.SendAndClose(&pb_gen.CodeSimUploadResponse{
 				Message: "Failed to write chunk",
-				Status:  pb_gen.CodeSimUploadStatus_fail,
+				Status:  pb_gen.CodeSimUploadStatus_code_sim_upload_status_fail,
 			})
 			return nil, err
 		}
@@ -181,10 +181,10 @@ func (u *Uploader) extract(fileType pb_gen.CodeSimUploadFileType, filepath strin
 		return f(tempDir)
 	}
 	switch fileType {
-	case pb_gen.CodeSimUploadFileType_file_type_unknown:
+	case pb_gen.CodeSimUploadFileType_code_sim_upload_file_type_unknown:
 		log.Printf("extract with unknown filetype")
 		return "", errors.New("extract with unknown filetype")
-	case pb_gen.CodeSimUploadFileType_zip:
+	case pb_gen.CodeSimUploadFileType_code_sim_upload_file_type_zip:
 		return wrapExtract(func(tempDir string) (string, error) {
 			err := util.Unzip(filepath, tempDir)
 			if err != nil {
