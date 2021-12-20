@@ -1,7 +1,6 @@
 package es
 
 import (
-	"code_sim/transformer"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -12,6 +11,7 @@ func TestNewCodePlainText(t *testing.T) {
 		CodeUniquePath: "asd",
 		Tag:            "123",
 		ID:             "idid",
+		ProjectName: "some_project_name",
 	})
 	s, _ := json.Marshal(c)
 	t.Log(string(s))
@@ -21,7 +21,5 @@ func TestNewCodePlainText(t *testing.T) {
 	if i == -1 {
 		t.Error("i==-1")
 	}
-	suffix := f[i+1:]
-	codeType, err := transformer.GetSupportedCodeType(suffix)
-	t.Logf("codeType=[%v], err=[%v]", codeType, err)
+	_ = f[i+1:]
 }

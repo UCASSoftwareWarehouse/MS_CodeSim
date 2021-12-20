@@ -50,10 +50,12 @@ func ExtractProjectFileFromESID(esID string) (*pb_gen.CodeSimProjectFile, error)
 func ConvertToES(f *pb_gen.CodeSimProjectFile) *es.ProjectFileIdentifier {
 	codeUniquePath := fmt.Sprintf("%s"+projectNameSplitWord+"%s", f.GetProjectInfo().GetProjectName(), f.GetRelativePath())
 	ID := fmt.Sprintf("%s:%s", codeUniquePath, f.GetProjectInfo().GetTag())
-	tag := f.GetProjectInfo().GetTag()
 	return &es.ProjectFileIdentifier{
 		CodeUniquePath: codeUniquePath,
-		Tag:            tag,
+		ProjectIdentifier: es.ProjectIdentifier{
+			ProjectName:    f.GetProjectInfo().GetProjectName(),
+			Tag:            f.GetProjectInfo().GetTag(),
+		},
 		ID:             ID,
 	}
 }

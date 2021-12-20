@@ -25,3 +25,7 @@ func (c *codeSimServer) Search(ctx context.Context, req *pb_gen.CodeSimSearchReq
 func (c *codeSimServer) Upload(stream pb_gen.CodeSim_UploadServer) error {
 	return internal.Upload(stream)
 }
+
+func (c *codeSimServer) Delete(ctx context.Context, req *pb_gen.CodeSimDeleteRequest) (*pb_gen.CodeSimDeleteResponse, error) {
+	return internal.Delete(ctx, req)
+}

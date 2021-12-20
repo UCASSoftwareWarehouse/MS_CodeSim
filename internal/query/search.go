@@ -18,9 +18,9 @@ var codeTypeMap = map[pb_gen.CodeSimSearchRequest_CodeType]es.CodeIndexField{
 	pb_gen.CodeSimSearchRequest_golang: es.CodeIndexFieldGolang,
 }
 
-func Search(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.CodeSimSearchResponse, error) {
+func Do(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.CodeSimSearchResponse, error) {
 	reqStr, _ := json.Marshal(req)
-	log.Printf("Search req=[%s]", reqStr)
+	log.Printf("Do req=[%s]", reqStr)
 
 	for _, codeType := range req.GetCodeTypes() {
 		if _, ok := codeTypeMap[codeType]; !ok {
@@ -45,8 +45,8 @@ func Search(ctx context.Context, req *pb_gen.CodeSimSearchRequest) (*pb_gen.Code
 		WithSource:   req.GetWithSource(),
 	})
 	if err != nil {
-		log.Printf("Search MatchCode failed, err=[%v]", err)
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Search failed, err=[%v]", err))
+		log.Printf("Do MatchCode failed, err=[%v]", err)
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Do failed, err=[%v]", err))
 	}
 	return packSearchResponse(res)
 }

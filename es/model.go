@@ -9,10 +9,15 @@ type CodePlainText struct {
 	*ProjectFileIdentifier
 }
 
+type ProjectIdentifier struct {
+	ProjectName string `json:"project_name"`
+	Tag         string `json:"tag"`
+}
+
 type ProjectFileIdentifier struct {
 	CodeUniquePath string `json:"code-unique-path"`
-	Tag            string `json:"tag"`
-	ID             string `json:"id"`
+	ProjectIdentifier
+	ID string `json:"id"`
 }
 
 func NewCodePlainText(plainText string, esInfo *ProjectFileIdentifier) *CodePlainText {
@@ -20,32 +25,15 @@ func NewCodePlainText(plainText string, esInfo *ProjectFileIdentifier) *CodePlai
 		CodePlainText: plainText,
 		ProjectFileIdentifier: &ProjectFileIdentifier{
 			CodeUniquePath: esInfo.CodeUniquePath,
-			Tag:            esInfo.Tag,
-			ID:             esInfo.ID,
+			ProjectIdentifier: ProjectIdentifier{
+				ProjectName: esInfo.ProjectName,
+				Tag:         esInfo.Tag,
+			},
+			ID: esInfo.ID,
 		},
 	}
 }
 
 func (c *CodePlainText) getID() string {
 	return c.ID
-}
-
-type CodeTransformedText struct {
-	CodeTransformedText string `json:"code-transformed-text"`
-	*ProjectFileIdentifier
-}
-
-func (c *CodeTransformedText) getID() string {
-	return c.ID
-}
-
-func NewCodeTransformedText(transformed string, esInfo *ProjectFileIdentifier) *CodeTransformedText {
-	return &CodeTransformedText{
-		CodeTransformedText: transformed,
-		ProjectFileIdentifier: &ProjectFileIdentifier{
-			CodeUniquePath: esInfo.CodeUniquePath,
-			Tag:            esInfo.Tag,
-			ID:             esInfo.ID,
-		},
-	}
 }

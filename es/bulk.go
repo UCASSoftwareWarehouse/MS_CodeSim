@@ -120,6 +120,49 @@ func BulkIndex(indexName IndexName, datas []Document) error {
 	}
 }
 
+func BulkDeleteByTerms(indexName IndexName, terms map[string]string) error {
+	// "query": {
+	//    "bool": {
+	//      "must": [
+	//        {
+	//          "term": { "project_name": "yzc_proj" }
+	//        },
+	//        {
+	//          "term": { "tag": "1.0" }
+	//        }
+	//      ]
+	//    }
+	//  }
+	must := make([]interface{}, 0)
+	for termName, termValue := range terms {
+		must = append(must, map[string]interface{}{
+			"term": map[string]interface{}{
+				termName: termValue,
+			},
+		})
+	}
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": must,
+			},
+		},
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Printf("BulkDeleteByTerms Fatal json marshal failed, err=[%s]", err)
+		return err
+	}
+	res, err := ES.DeleteByQuery([]string{string(indexName)}, &buf)
+	if err != nil {
+		log.Printf("BulkDeleteByTerms DeleteByQuery failed, err=[%s]", err)
+		return err
+	}
+	s, _ := json.Marshal(res)
+	log.Printf("BulkDeleteByTerms DeleteByQuery response=[%s]", s)
+	return nil
+}
+
 func BulkDelete(indexName string, ids []string) {
 	log.SetFlags(0)
 	numWorkers := 5
